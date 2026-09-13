@@ -18,6 +18,10 @@
   th { background: #eef1f8; }
   td.name, th.name { text-align: left; }
   .note { color: #999; font-size: 0.8rem; }
+  .badges { display: flex; gap: 3px; justify-content: flex-start; }
+  .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px; padding: 0 3px; border-radius: 4px; font-size: 0.7rem; background: #eee; color: #bbb; }
+  .badge.on { background: #2a5adf; color: #fff; font-weight: 600; cursor: pointer; }
+  .badge.on:hover { background: #1a3fae; }
   .empty { color: #888; padding: 16px 0; }
   footer { margin-top: 24px; color: #888; font-size: 0.8rem; line-height: 1.6; }
 </style>
@@ -47,6 +51,7 @@
         <th>較前次高點</th>
         <th>YoY</th>
         <th class="name">最新營收月份</th>
+        <th class="name">上榜區間</th>
       </tr>
     </thead>
     <tbody>
@@ -60,6 +65,17 @@
         <td>{% if r.pct_above_prior_record is not none %}{{ "{:+.1f}%".format(r.pct_above_prior_record) }}{% else %}-{% endif %}</td>
         <td>{% if r.yoy_pct is not none %}{{ "{:+.1f}%".format(r.yoy_pct) }}{% else %}-{% endif %}</td>
         <td class="name">{{ r.revenue_month }}</td>
+        <td class="name">
+          <div class="badges">
+            {% for w2 in windows %}
+            {% if w2 in r.on_windows %}
+            <span class="badge on" data-target="w{{ w2 }}" title="也上榜 {{ w2 }}日">{{ w2 }}</span>
+            {% else %}
+            <span class="badge">{{ w2 }}</span>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -85,6 +101,12 @@
     panels.forEach(function (p) { p.classList.toggle("active", p.id === id); });
   }
   buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      activate(b.dataset.target);
+      history.replaceState(null, "", "#" + b.dataset.target);
+    });
+  });
+  document.querySelectorAll(".badge.on[data-target]").forEach(function (b) {
     b.addEventListener("click", function () {
       activate(b.dataset.target);
       history.replaceState(null, "", "#" + b.dataset.target);

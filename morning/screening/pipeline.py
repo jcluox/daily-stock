@@ -42,4 +42,12 @@ def run() -> tuple[dict[int, list[dict]], int | None]:
             )
         results[window] = passed
 
+    on_windows_by_code: dict[str, list[int]] = {}
+    for window, rows in results.items():
+        for row in rows:
+            on_windows_by_code.setdefault(row["code"], []).append(window)
+    for rows in results.values():
+        for row in rows:
+            row["on_windows"] = on_windows_by_code[row["code"]]
+
     return results, earliest_revenue_roc_year
