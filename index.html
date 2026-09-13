@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日選股報告</title>
+<style>
+  body { font-family: -apple-system, "Noto Sans TC", sans-serif; margin: 0; padding: 16px; background: #f7f7f8; color: #222; }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  .meta { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .tab-btn { padding: 8px 16px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; font-size: 0.95rem; }
+  .tab-btn.active { background: #2a5adf; color: #fff; border-color: #2a5adf; }
+  .tab-panel { display: none; overflow-x: auto; }
+  .tab-panel.active { display: block; }
+  table { border-collapse: collapse; width: 100%; background: #fff; min-width: 640px; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; font-size: 0.9rem; text-align: right; }
+  th { background: #eef1f8; }
+  td.name, th.name { text-align: left; }
+  .note { color: #999; font-size: 0.8rem; }
+  .empty { color: #888; padding: 16px 0; }
+  footer { margin-top: 24px; color: #888; font-size: 0.8rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>每日選股報告</h1>
+<div class="meta">產生時間：2026-09-13 07:59（台灣時間）</div>
+
+<div class="tabs">
+
+  <button class="tab-btn active" data-target="w1">1日</button>
+
+  <button class="tab-btn" data-target="w2">2日</button>
+
+  <button class="tab-btn" data-target="w5">5日</button>
+
+  <button class="tab-btn" data-target="w10">10日</button>
+
+  <button class="tab-btn" data-target="w15">15日</button>
+
+  <button class="tab-btn" data-target="w30">30日</button>
+
+</div>
+
+
+<section class="tab-panel active" id="w1">
+  
+  
+  <div class="empty">今日無符合條件的公司。</div>
+  
+</section>
+
+<section class="tab-panel" id="w2">
+  
+  
+  <div class="empty">今日無符合條件的公司。</div>
+  
+</section>
+
+<section class="tab-panel" id="w5">
+  
+  
+  <div class="empty">今日無符合條件的公司。</div>
+  
+</section>
+
+<section class="tab-panel" id="w10">
+  
+  
+  <div class="empty">今日無符合條件的公司。</div>
+  
+</section>
+
+<section class="tab-panel" id="w15">
+  
+  
+  <div class="empty">今日無符合條件的公司。</div>
+  
+</section>
+
+<section class="tab-panel" id="w30">
+  
+  
+  <div class="empty">今日無符合條件的公司。</div>
+  
+</section>
+
+
+<footer>
+  <div>選股邏輯：先取近N個交易日平均成交值前30大，再篩選最新月營收至少為近1年新高者。</div>
+  <div>營收歷史資料回溯至 2010 年（民國99年），「史上新高」係指此範圍內的最高紀錄。</div>
+  <div>10/15/30日等較長區間的資料自本系統上線起逐日累積，累積天數不足時以實際可取得天數計算平均值並標註。</div>
+</footer>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll(".tab-btn");
+  var panels = document.querySelectorAll(".tab-panel");
+  function activate(id) {
+    buttons.forEach(function (b) { b.classList.toggle("active", b.dataset.target === id); });
+    panels.forEach(function (p) { p.classList.toggle("active", p.id === id); });
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      activate(b.dataset.target);
+      history.replaceState(null, "", "#" + b.dataset.target);
+    });
+  });
+  if (location.hash) {
+    var target = location.hash.slice(1);
+    if (document.getElementById(target)) activate(target);
+  }
+})();
+</script>
+</body>
+</html>
