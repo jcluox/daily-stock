@@ -17,7 +17,7 @@ _session.headers.update(
 )
 
 
-def get(url: str, retries: int = 3, delay: float = REQUEST_DELAY_SECONDS, **kwargs) -> requests.Response | None:
+def get(url: str, retries: int = 6, delay: float = REQUEST_DELAY_SECONDS, **kwargs) -> requests.Response | None:
     """GET with retry/backoff. Returns None on 404 (treated as "no data"), raises on other failures."""
     last_error = None
     for attempt in range(retries):
@@ -33,5 +33,9 @@ def get(url: str, retries: int = 3, delay: float = REQUEST_DELAY_SECONDS, **kwar
             time.sleep(delay)
             return resp
         last_error = RuntimeError(f"HTTP {resp.status_code} for {url}")
-        time.sleep(delay * (attempt + 1))
+        if resp.status_code in (428, 429):
+            # TWSE/TPEx rate-limit bursts of requests; back off much longer than a normal retry.
+            time.sleep(max(delay * 10, 15) * (attempt + 1))
+        else:
+            time.sleep(delay * (attempt + 1))
     raise RuntimeError(f"Failed to fetch {url} after {retries} attempts: {last_error}")

@@ -21,6 +21,15 @@ def months_between(year_a: int, month_a: int, year_b: int, month_b: int) -> int:
     return abs((year_b * 12 + month_b) - (year_a * 12 + month_a))
 
 
+REVENUE_PUBLISH_DAY = 12  # approximation: MOPS requires disclosure by the 10th of the following month
+
+
+def revenue_known_date(roc_year: int, month: int) -> dt.date:
+    """Approximate date by which a given month's revenue is publicly known."""
+    ad_year, next_month = add_months(roc_year_to_ad(roc_year), month, 1)
+    return dt.date(ad_year, next_month, REVENUE_PUBLISH_DAY)
+
+
 def now_taipei() -> dt.datetime:
     return dt.datetime.utcnow() + dt.timedelta(hours=8)
 

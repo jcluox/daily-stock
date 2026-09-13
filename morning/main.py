@@ -4,9 +4,9 @@ import argparse
 import datetime as dt
 import sys
 
-from morning.cache.store import save_daily, save_revenue_month
+from morning.cache.store import save_daily, save_index_point, save_revenue_month
 from morning.cache.trading_calendar import known_trading_days
-from morning.config import REVENUE_HISTORY_START_ROC_YEAR
+from morning.config import REQUEST_DELAY_SECONDS, REVENUE_HISTORY_START_ROC_YEAR
 from morning.dateutil_roc import ad_year_to_roc, now_taipei, today_taipei
 from morning.fetch.mops_revenue import fetch_revenue_month
 from morning.fetch.tpex import fetch_tpex_daily
@@ -22,16 +22,28 @@ from morning.screening.pipeline import run as run_pipeline
 _MAX_BACKFILL_CALENDAR_DAYS = 45
 
 
-def fill_missing_twse_days(upto_date: dt.date) -> None:
-    known = known_trading_days()
-    start = (max(known) + dt.timedelta(days=1)) if known else (upto_date - dt.timedelta(days=_MAX_BACKFILL_CALENDAR_DAYS))
+def fill_missing_twse_days(
+    upto_date: dt.date, since_date: dt.date | None = None, delay: float = REQUEST_DELAY_SECONDS
+) -> None:
+    """Fetch and cache any TWSE trading days in [since_date, upto_date] not already cached.
 
-    d = start
+    `since_date` defaults to the day after the last cached day (or a fixed
+    lookback window on first run). The backtest passes an explicit
+    `since_date` (and a gentler `delay`) to force a deeper one-time backfill.
+    """
+    known = set(known_trading_days())
+    if since_date is None:
+        since_date = (max(known) + dt.timedelta(days=1)) if known else (upto_date - dt.timedelta(days=_MAX_BACKFILL_CALENDAR_DAYS))
+
+    d = since_date
     while d <= upto_date:
-        twse_df = fetch_twse_daily(d)
-        if twse_df is not None and not twse_df.empty:
-            save_daily("twse", d, twse_df)
-            print(f"[twse] saved {len(twse_df)} rows for {d}")
+        if d not in known:
+            twse_df, taiex_close = fetch_twse_daily(d, delay=delay)
+            if twse_df is not None and not twse_df.empty:
+                save_daily("twse", d, twse_df)
+                if taiex_close is not None:
+                    save_index_point(d, taiex_close)
+                print(f"[twse] saved {len(twse_df)} rows for {d}")
         d += dt.timedelta(days=1)
 
 

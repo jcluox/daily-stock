@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime as dt
+
 import pandas as pd
 
 from morning.cache.store import load_all_revenue_history, load_trading_value_history
@@ -8,39 +10,46 @@ from morning.screening.revenue import is_one_year_high, latest_published_revenue
 from morning.screening.trading_value import compute_top_n
 
 
+def select_for_window(window: int, revenue_history: pd.DataFrame, upto_date: dt.date | None = None) -> list[dict]:
+    """Run the two-stage screen (trading value top-N -> revenue new-high) for one window.
+
+    Shared by the daily report (upto_date=None, i.e. "as of now") and the
+    backtest (upto_date=some historical date), so both use identical logic.
+    """
+    history = load_trading_value_history(window, upto_date=upto_date)
+    candidates = compute_top_n(window, history)
+
+    passed = []
+    for row in candidates.itertuples():
+        rev = latest_published_revenue(row.code, revenue_history)
+        if rev is None:
+            continue
+        if not is_one_year_high(row.code, revenue_history):
+            continue
+        label, pct = record_high_label(row.code, revenue_history)
+        yoy_pct = rev["yoy_pct"]
+        passed.append(
+            {
+                "rank": row.rank,
+                "code": row.code,
+                "name": row.name,
+                "total_trading_value": row.total_trading_value,
+                "insufficient_history": row.insufficient_history,
+                "days_available": row.days_available,
+                "revenue_label": label,
+                "pct_above_prior_record": pct,
+                "yoy_pct": None if pd.isna(yoy_pct) else yoy_pct,
+                "revenue_month": f"{int(rev['roc_year'])}/{int(rev['month']):02d}",
+            }
+        )
+    return passed
+
+
 def run() -> tuple[dict[int, list[dict]], int | None]:
     revenue_history = load_all_revenue_history()
-    results: dict[int, list[dict]] = {}
     earliest_revenue_roc_year = int(revenue_history["roc_year"].min()) if not revenue_history.empty else None
 
-    for window in WINDOWS:
-        history = load_trading_value_history(window)
-        candidates = compute_top_n(window, history)
-
-        passed = []
-        for row in candidates.itertuples():
-            rev = latest_published_revenue(row.code, revenue_history)
-            if rev is None:
-                continue
-            if not is_one_year_high(row.code, revenue_history):
-                continue
-            label, pct = record_high_label(row.code, revenue_history)
-            yoy_pct = rev["yoy_pct"]
-            passed.append(
-                {
-                    "rank": row.rank,
-                    "code": row.code,
-                    "name": row.name,
-                    "total_trading_value": row.total_trading_value,
-                    "insufficient_history": row.insufficient_history,
-                    "days_available": row.days_available,
-                    "revenue_label": label,
-                    "pct_above_prior_record": pct,
-                    "yoy_pct": None if pd.isna(yoy_pct) else yoy_pct,
-                    "revenue_month": f"{int(rev['roc_year'])}/{int(rev['month']):02d}",
-                }
-            )
-        results[window] = passed
+    results: dict[int, list[dict]] = {window: select_for_window(window, revenue_history) for window in WINDOWS}
 
     on_windows_by_code: dict[str, list[int]] = {}
     for window, rows in results.items():

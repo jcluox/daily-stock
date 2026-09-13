@@ -14,7 +14,11 @@ REVENUE_DIR = RAW_DIR / "revenue"
 BUILD_DIR = ROOT_DIR / "build"
 REPORT_FILE = BUILD_DIR / "index.html"
 
-REVENUE_HISTORY_START_ROC_YEAR = 99  # MOPS bulk report 404s before this (2010)
+REVENUE_HISTORY_START_ROC_YEAR = 99  # earlier years return no data; actual earliest availability found was ROC 102 (2013)
 
-REQUEST_DELAY_SECONDS = 1.0
+REQUEST_DELAY_SECONDS = 1.5
 REQUEST_TIMEOUT_SECONDS = 15
+
+BACKTEST_YEARS = 2
+BACKTEST_HORIZONS = [5, 20]
+BACKTEST_RESULTS_FILE = ROOT_DIR / "backtest_results.csv"
