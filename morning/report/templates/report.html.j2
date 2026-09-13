@@ -72,7 +72,7 @@
 
 <footer>
   <div>選股邏輯：先取近N個交易日平均成交值前30大，再篩選最新月營收至少為近1年新高者。</div>
-  <div>營收歷史資料回溯至 2010 年（民國99年），「史上新高」係指此範圍內的最高紀錄。</div>
+  <div>營收歷史資料回溯至{% if earliest_revenue_roc_year %} {{ earliest_revenue_roc_year + 1911 }} 年（民國{{ earliest_revenue_roc_year }}年）{% else %}目前累積的範圍{% endif %}，「史上新高」係指此範圍內的最高紀錄。</div>
   <div>10/15/30日等較長區間的資料自本系統上線起逐日累積，累積天數不足時以實際可取得天數計算平均值並標註。</div>
 </footer>
 

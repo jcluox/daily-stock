@@ -5,22 +5,38 @@ import datetime as dt
 import sys
 
 from morning.cache.store import save_daily, save_revenue_month
+from morning.cache.trading_calendar import known_trading_days
 from morning.config import REVENUE_HISTORY_START_ROC_YEAR
-from morning.dateutil_roc import ad_year_to_roc, today_taipei
+from morning.dateutil_roc import ad_year_to_roc, now_taipei, today_taipei
 from morning.fetch.mops_revenue import fetch_revenue_month
 from morning.fetch.tpex import fetch_tpex_daily
 from morning.fetch.twse import fetch_twse_daily
 from morning.report.render import render_report
 from morning.screening.pipeline import run as run_pipeline
 
+# On first run (or after a gap, e.g. a missed cron), catch up on any TWSE
+# trading days between the last cached day and today, rather than only
+# ever fetching "today" — TWSE's endpoint supports arbitrary historical
+# dates, so this keeps the rolling windows populated instead of sitting
+# empty until 30 more days pass one at a time.
+_MAX_BACKFILL_CALENDAR_DAYS = 45
+
+
+def fill_missing_twse_days(upto_date: dt.date) -> None:
+    known = known_trading_days()
+    start = (max(known) + dt.timedelta(days=1)) if known else (upto_date - dt.timedelta(days=_MAX_BACKFILL_CALENDAR_DAYS))
+
+    d = start
+    while d <= upto_date:
+        twse_df = fetch_twse_daily(d)
+        if twse_df is not None and not twse_df.empty:
+            save_daily("twse", d, twse_df)
+            print(f"[twse] saved {len(twse_df)} rows for {d}")
+        d += dt.timedelta(days=1)
+
 
 def fetch_today(date: dt.date) -> None:
-    twse_df = fetch_twse_daily(date)
-    if twse_df is None or twse_df.empty:
-        print(f"[twse] no data for {date} (non-trading day?)")
-    else:
-        save_daily("twse", date, twse_df)
-        print(f"[twse] saved {len(twse_df)} rows for {date}")
+    fill_missing_twse_days(date)
 
     try:
         tpex_df = fetch_tpex_daily()
@@ -77,8 +93,8 @@ def main() -> int:
     fetch_today(date)
     fetch_latest_revenue(date)
 
-    results = run_pipeline()
-    render_report(results, generated_at=dt.datetime.now())
+    results, earliest_revenue_roc_year = run_pipeline()
+    render_report(results, generated_at=now_taipei(), earliest_revenue_roc_year=earliest_revenue_roc_year)
     print("[report] rendered")
     return 0
 

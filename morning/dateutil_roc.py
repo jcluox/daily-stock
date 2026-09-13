@@ -21,5 +21,9 @@ def months_between(year_a: int, month_a: int, year_b: int, month_b: int) -> int:
     return abs((year_b * 12 + month_b) - (year_a * 12 + month_a))
 
 
+def now_taipei() -> dt.datetime:
+    return dt.datetime.utcnow() + dt.timedelta(hours=8)
+
+
 def today_taipei() -> dt.date:
-    return (dt.datetime.utcnow() + dt.timedelta(hours=8)).date()
+    return now_taipei().date()

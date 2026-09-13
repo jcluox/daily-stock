@@ -8,9 +8,10 @@ from morning.screening.revenue import is_one_year_high, latest_published_revenue
 from morning.screening.trading_value import compute_top_n
 
 
-def run() -> dict[int, list[dict]]:
+def run() -> tuple[dict[int, list[dict]], int | None]:
     revenue_history = load_all_revenue_history()
     results: dict[int, list[dict]] = {}
+    earliest_revenue_roc_year = int(revenue_history["roc_year"].min()) if not revenue_history.empty else None
 
     for window in WINDOWS:
         history = load_trading_value_history(window)
@@ -41,4 +42,4 @@ def run() -> dict[int, list[dict]]:
             )
         results[window] = passed
 
-    return results
+    return results, earliest_revenue_roc_year
