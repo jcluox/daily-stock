@@ -42,7 +42,7 @@
         <th>排名</th>
         <th class="name">代號</th>
         <th class="name">名稱</th>
-        <th>{{ w }}日均成交值</th>
+        <th>{{ w }}日累積成交值</th>
         <th>營收新高</th>
         <th>較前次高點</th>
         <th>YoY</th>
@@ -55,7 +55,7 @@
         <td>{{ r.rank }}</td>
         <td class="name">{{ r.code }}</td>
         <td class="name">{{ r.name }}</td>
-        <td>{{ "{:,.0f}".format(r.avg_trading_value) }}{% if r.insufficient_history %} <span class="note">(資料不足 {{ r.days_available }}/{{ w }}日)</span>{% endif %}</td>
+        <td>{{ "{:,.0f}".format(r.total_trading_value) }}{% if r.insufficient_history %} <span class="note">(資料不足 {{ r.days_available }}/{{ w }}日)</span>{% endif %}</td>
         <td>{{ r.revenue_label }}</td>
         <td>{% if r.pct_above_prior_record is not none %}{{ "{:+.1f}%".format(r.pct_above_prior_record) }}{% else %}-{% endif %}</td>
         <td>{% if r.yoy_pct is not none %}{{ "{:+.1f}%".format(r.yoy_pct) }}{% else %}-{% endif %}</td>
@@ -71,7 +71,7 @@
 {% endfor %}
 
 <footer>
-  <div>選股邏輯：先取近N個交易日平均成交值前30大，再篩選最新月營收至少為近1年新高者。</div>
+  <div>選股邏輯：先取近N個交易日累積成交值前30大，再篩選最新月營收至少為近1年新高者。</div>
   <div>營收歷史資料回溯至{% if earliest_revenue_roc_year %} {{ earliest_revenue_roc_year + 1911 }} 年（民國{{ earliest_revenue_roc_year }}年）{% else %}目前累積的範圍{% endif %}，「史上新高」係指此範圍內的最高紀錄。</div>
   <div>10/15/30日等較長區間的資料自本系統上線起逐日累積，累積天數不足時以實際可取得天數計算平均值並標註。</div>
 </footer>

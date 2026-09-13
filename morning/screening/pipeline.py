@@ -31,7 +31,7 @@ def run() -> tuple[dict[int, list[dict]], int | None]:
                     "rank": row.rank,
                     "code": row.code,
                     "name": row.name,
-                    "avg_trading_value": row.avg_trading_value,
+                    "total_trading_value": row.total_trading_value,
                     "insufficient_history": row.insufficient_history,
                     "days_available": row.days_available,
                     "revenue_label": label,
