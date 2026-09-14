@@ -4,7 +4,7 @@ import datetime as dt
 
 import pandas as pd
 
-from morning.cache.store import load_all_revenue_history, load_trading_value_history
+from morning.cache.store import load_all_revenue_history, load_margin, load_trading_value_history
 from morning.config import WINDOWS
 from morning.screening.revenue import is_one_year_high, latest_published_revenue, record_high_label
 from morning.screening.trading_value import compute_top_n
@@ -50,6 +50,14 @@ def run() -> tuple[dict[int, list[dict]], int | None]:
     earliest_revenue_roc_year = int(revenue_history["roc_year"].min()) if not revenue_history.empty else None
 
     results: dict[int, list[dict]] = {window: select_for_window(window, revenue_history) for window in WINDOWS}
+
+    # Gross margin is display-only (added after screening) — it does not affect
+    # which companies are selected, only what's shown about them.
+    margin_by_code = load_margin().set_index("code")["gross_margin_pct"].to_dict()
+    for rows in results.values():
+        for row in rows:
+            margin = margin_by_code.get(row["code"])
+            row["gross_margin_pct"] = None if pd.isna(margin) else margin
 
     on_windows_by_code: dict[str, list[int]] = {}
     for window, rows in results.items():

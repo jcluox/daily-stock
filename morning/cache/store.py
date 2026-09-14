@@ -5,7 +5,7 @@ import datetime as dt
 import pandas as pd
 
 from morning.cache.trading_calendar import known_trading_days
-from morning.config import DATA_DIR, REVENUE_DIR, TPEX_DIR, TWSE_DIR
+from morning.config import DATA_DIR, MARGIN_DIR, REVENUE_DIR, TPEX_DIR, TWSE_DIR
 from morning.dateutil_roc import revenue_known_date
 
 INDEX_FILE = DATA_DIR / "raw" / "index" / "taiex.csv"
@@ -20,6 +20,21 @@ def save_daily(market: str, date: dt.date, df: pd.DataFrame) -> None:
 def save_revenue_month(market: str, roc_year: int, month: int, df: pd.DataFrame) -> None:
     REVENUE_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(REVENUE_DIR / f"{market}_{roc_year}_{month}.csv", index=False)
+
+
+def save_margin(market: str, df: pd.DataFrame) -> None:
+    """Overwrite the latest gross-margin snapshot for one market (no history kept)."""
+    MARGIN_DIR.mkdir(parents=True, exist_ok=True)
+    df.to_csv(MARGIN_DIR / f"{market}.csv", index=False)
+
+
+def load_margin() -> pd.DataFrame:
+    if not MARGIN_DIR.exists():
+        return pd.DataFrame(columns=["code", "name", "roc_year", "quarter", "gross_margin_pct"])
+    frames = [pd.read_csv(f, dtype={"code": str}) for f in MARGIN_DIR.glob("*.csv")]
+    if not frames:
+        return pd.DataFrame(columns=["code", "name", "roc_year", "quarter", "gross_margin_pct"])
+    return pd.concat(frames, ignore_index=True)
 
 
 def save_index_point(date: dt.date, close: float) -> None:

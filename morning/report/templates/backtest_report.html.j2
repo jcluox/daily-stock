@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>選股策略回測結果</title>
+<style>
+  body { font-family: -apple-system, "Noto Sans TC", sans-serif; margin: 0; padding: 16px; background: #f7f7f8; color: #222; }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  .meta { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; background: #fff; margin-bottom: 24px; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; font-size: 0.9rem; text-align: right; }
+  th { background: #eef1f8; }
+  td.window, th.window { text-align: left; font-weight: 600; }
+  .pos { color: #0a7d32; }
+  .neg { color: #c0392b; }
+  footer { margin-top: 16px; color: #888; font-size: 0.8rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>選股策略回測結果</h1>
+<div class="meta">產生時間：{{ generated_at.strftime("%Y-%m-%d %H:%M") }}（台灣時間）｜回測期間：約 {{ years }} 年｜共 {{ n_picks_total }} 筆選股紀錄</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="window">窗口</th>
+      <th>持有天數</th>
+      <th>選股次數</th>
+      <th>勝率</th>
+      <th>平均報酬</th>
+      <th>平均超額報酬（贏大盤幅度）</th>
+      <th>中位數超額報酬</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td class="window">{{ row.window }}日</td>
+      <td>{{ row.horizon }}日</td>
+      <td>{{ row.n_picks }}</td>
+      <td>{{ "{:.1%}".format(row.win_rate) }}</td>
+      <td class="{{ 'pos' if row.avg_return >= 0 else 'neg' }}">{{ "{:+.2%}".format(row.avg_return) }}</td>
+      <td class="{{ 'pos' if row.avg_excess_return >= 0 else 'neg' }}">{{ "{:+.2%}".format(row.avg_excess_return) }}</td>
+      <td class="{{ 'pos' if row.median_excess_return >= 0 else 'neg' }}">{{ "{:+.2%}".format(row.median_excess_return) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<footer>
+  <div>回測方法：在每個歷史交易日重跑「成交值前30大 → 營收創新高」的篩選邏輯，只使用當下已知的資料（營收假設於次月12日公布），追蹤選中股票之後N日的報酬並與台股大盤指數比較。</div>
+  <div>已知限制：回測母體僅涵蓋上市(TWSE)股票，不含上櫃(TPEx)；不計手續費與滑價；這是策略方向性驗證，不是嚴謹的統計檢定。</div>
+</footer>
+</body>
+</html>

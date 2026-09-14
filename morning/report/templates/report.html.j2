@@ -50,6 +50,7 @@
         <th>營收新高</th>
         <th>較前次高點</th>
         <th>YoY</th>
+        <th>毛利率</th>
         <th class="name">最新營收月份</th>
         <th class="name">上榜區間</th>
       </tr>
@@ -64,6 +65,7 @@
         <td>{{ r.revenue_label }}</td>
         <td>{% if r.pct_above_prior_record is not none %}{{ "{:+.1f}%".format(r.pct_above_prior_record) }}{% else %}-{% endif %}</td>
         <td>{% if r.yoy_pct is not none %}{{ "{:+.1f}%".format(r.yoy_pct) }}{% else %}-{% endif %}</td>
+        <td>{% if r.gross_margin_pct is not none %}{{ "{:.1f}%".format(r.gross_margin_pct) }}{% else %}-{% endif %}</td>
         <td class="name">{{ r.revenue_month }}</td>
         <td class="name">
           <div class="badges">

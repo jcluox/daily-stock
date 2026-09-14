@@ -10,6 +10,7 @@ RAW_DIR = DATA_DIR / "raw"
 TWSE_DIR = RAW_DIR / "twse"
 TPEX_DIR = RAW_DIR / "tpex"
 REVENUE_DIR = RAW_DIR / "revenue"
+MARGIN_DIR = RAW_DIR / "margin"
 
 BUILD_DIR = ROOT_DIR / "build"
 REPORT_FILE = BUILD_DIR / "index.html"
@@ -22,3 +23,4 @@ REQUEST_TIMEOUT_SECONDS = 15
 BACKTEST_YEARS = 2
 BACKTEST_HORIZONS = [5, 20]
 BACKTEST_RESULTS_FILE = ROOT_DIR / "backtest_results.csv"
+BACKTEST_REPORT_FILE = ROOT_DIR / "backtest_report.html"

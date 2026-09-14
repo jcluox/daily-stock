@@ -3,13 +3,15 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import sys
+from pathlib import Path
 
 import pandas as pd
+from jinja2 import Environment, FileSystemLoader
 
 from morning.cache.store import load_all_revenue_history, load_index_history, load_trading_value_history
 from morning.cache.trading_calendar import known_trading_days
-from morning.config import BACKTEST_HORIZONS, BACKTEST_RESULTS_FILE, BACKTEST_YEARS, WINDOWS
-from morning.dateutil_roc import revenue_known_date, today_taipei
+from morning.config import BACKTEST_HORIZONS, BACKTEST_REPORT_FILE, BACKTEST_RESULTS_FILE, BACKTEST_YEARS, WINDOWS
+from morning.dateutil_roc import now_taipei, revenue_known_date, today_taipei
 from morning.main import fill_missing_twse_days
 from morning.screening.revenue import is_one_year_high, latest_published_revenue, record_high_label
 from morning.screening.trading_value import compute_top_n
@@ -131,6 +133,15 @@ def summarize(results: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def render_backtest_report(results: pd.DataFrame, summary: pd.DataFrame, years: float) -> None:
+    template_dir = Path(__file__).parent / "report" / "templates"
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template("backtest_report.html.j2")
+    rows = summary.reset_index().to_dict("records")
+    html = template.render(rows=rows, generated_at=now_taipei(), years=years, n_picks_total=len(results))
+    BACKTEST_REPORT_FILE.write_text(html, encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--years", type=float, default=BACKTEST_YEARS, help="How many years of history to backtest")
@@ -151,6 +162,9 @@ def main() -> int:
     summary = summarize(results)
     pd.set_option("display.float_format", lambda v: f"{v:.4f}")
     print(summary)
+
+    render_backtest_report(results, summary, args.years)
+    print(f"[backtest] wrote report to {BACKTEST_REPORT_FILE}")
     return 0
 
 

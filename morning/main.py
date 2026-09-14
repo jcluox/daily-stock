@@ -4,10 +4,11 @@ import argparse
 import datetime as dt
 import sys
 
-from morning.cache.store import save_daily, save_index_point, save_revenue_month
+from morning.cache.store import save_daily, save_index_point, save_margin, save_revenue_month
 from morning.cache.trading_calendar import known_trading_days
 from morning.config import REQUEST_DELAY_SECONDS, REVENUE_HISTORY_START_ROC_YEAR
 from morning.dateutil_roc import ad_year_to_roc, now_taipei, today_taipei
+from morning.fetch.mops_margin import fetch_gross_margin
 from morning.fetch.mops_revenue import fetch_revenue_month
 from morning.fetch.tpex import fetch_tpex_daily
 from morning.fetch.twse import fetch_twse_daily
@@ -74,6 +75,16 @@ def fetch_latest_revenue(date: dt.date) -> None:
             print(f"[revenue] {market} {y}/{m} saved {len(df)} rows")
 
 
+def fetch_latest_margin() -> None:
+    for market in ("sii", "otc"):
+        df = fetch_gross_margin(market)
+        if df is None or df.empty:
+            print(f"[margin] {market} not available")
+            continue
+        save_margin(market, df)
+        print(f"[margin] {market} saved {len(df)} rows")
+
+
 def backfill_revenue(since_roc_year: int) -> None:
     current = today_taipei()
     current_roc_year = ad_year_to_roc(current.year)
@@ -104,6 +115,7 @@ def main() -> int:
     date = today_taipei()
     fetch_today(date)
     fetch_latest_revenue(date)
+    fetch_latest_margin()
 
     results, earliest_revenue_roc_year = run_pipeline()
     render_report(results, generated_at=now_taipei(), earliest_revenue_roc_year=earliest_revenue_roc_year)

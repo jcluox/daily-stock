@@ -4,3 +4,4 @@ __pycache__/
 build/
 .claude/
 backtest_results.csv
+backtest_report.html
