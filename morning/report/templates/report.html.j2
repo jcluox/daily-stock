@@ -46,7 +46,7 @@
         <th>排名</th>
         <th class="name">代號</th>
         <th class="name">名稱</th>
-        <th>{{ w }}日累積成交值</th>
+        <th>{{ w }}日累積成交值(億)</th>
         <th>營收新高</th>
         <th>較前次高點</th>
         <th>YoY</th>
@@ -61,7 +61,7 @@
         <td>{{ r.rank }}</td>
         <td class="name">{{ r.code }}</td>
         <td class="name">{{ r.name }}</td>
-        <td>{{ "{:,.0f}".format(r.total_trading_value) }}{% if r.insufficient_history %} <span class="note">(資料不足 {{ r.days_available }}/{{ w }}日)</span>{% endif %}</td>
+        <td>{{ r.total_trading_value | yi }}{% if r.insufficient_history %} <span class="note">(資料不足 {{ r.days_available }}/{{ w }}日)</span>{% endif %}</td>
         <td>{{ r.revenue_label }}</td>
         <td>{% if r.pct_above_prior_record is not none %}{{ "{:+.1f}%".format(r.pct_above_prior_record) }}{% else %}-{% endif %}</td>
         <td>{% if r.yoy_pct is not none %}{{ "{:+.1f}%".format(r.yoy_pct) }}{% else %}-{% endif %}</td>

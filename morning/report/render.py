@@ -10,10 +10,17 @@ from morning.config import BUILD_DIR, REPORT_FILE, WINDOWS
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
+def _format_yi(value: float) -> str:
+    """Format a NT-dollar amount as 億 (hundred millions), floored to 1 decimal place."""
+    floored = (int(value) // 10_000_000) / 10
+    return f"{floored:.1f}"
+
+
 def render_report(
     results: dict[int, list[dict]], generated_at: dt.datetime, earliest_revenue_roc_year: int | None
 ) -> None:
     env = Environment(loader=FileSystemLoader(_TEMPLATE_DIR))
+    env.filters["yi"] = _format_yi
     template = env.get_template("report.html.j2")
     html = template.render(
         windows=WINDOWS,
