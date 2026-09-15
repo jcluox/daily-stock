@@ -39,7 +39,8 @@ def fetch_twse_daily(date: dt.date, delay: float = REQUEST_DELAY_SECONDS) -> tup
     """All TWSE-listed stocks' trading data for one date, plus the TAIEX close.
 
     Returns (stocks_df, taiex_close). stocks_df has columns
-    [code, name, trading_value, close_price], or is None if the date has no
+    [code, name, trading_value, open_price, high_price, low_price,
+    close_price], or is None if the date has no
     data (non-trading day). taiex_close is the 發行量加權股價指數 close for
     that date, or None if unavailable. `delay` lets bulk backfills use a
     gentler pace than the daily job's 1-2 calls (see fetch/http.py — this
@@ -55,7 +56,7 @@ def fetch_twse_daily(date: dt.date, delay: float = REQUEST_DELAY_SECONDS) -> tup
     tables = payload.get("tables", [])
     taiex_close = _parse_taiex_close(tables)
 
-    target = _find_table(tables, ["證券代號", "成交金額", "收盤價"])
+    target = _find_table(tables, ["證券代號", "成交金額", "開盤價", "最高價", "最低價", "收盤價"])
     if target is None:
         return None, taiex_close
 
@@ -63,7 +64,16 @@ def fetch_twse_daily(date: dt.date, delay: float = REQUEST_DELAY_SECONDS) -> tup
     code_idx = fields.index("證券代號")
     name_idx = fields.index("證券名稱")
     value_idx = fields.index("成交金額")
+    open_idx = fields.index("開盤價")
+    high_idx = fields.index("最高價")
+    low_idx = fields.index("最低價")
     close_idx = fields.index("收盤價")
+
+    def _to_float(raw: str) -> float | None:
+        try:
+            return float(raw.replace(",", ""))
+        except (ValueError, AttributeError):
+            return None
 
     rows = []
     for row in target["data"]:
@@ -71,12 +81,17 @@ def fetch_twse_daily(date: dt.date, delay: float = REQUEST_DELAY_SECONDS) -> tup
             trading_value = int(row[value_idx].replace(",", ""))
         except (ValueError, AttributeError):
             continue
-        try:
-            close_price = float(row[close_idx].replace(",", ""))
-        except (ValueError, AttributeError):
-            close_price = None
         rows.append(
-            {"code": row[code_idx], "name": row[name_idx], "trading_value": trading_value, "close_price": close_price}
+            {
+                "code": row[code_idx],
+                "name": row[name_idx],
+                "trading_value": trading_value,
+                "open_price": _to_float(row[open_idx]),
+                "high_price": _to_float(row[high_idx]),
+                "low_price": _to_float(row[low_idx]),
+                "close_price": _to_float(row[close_idx]),
+            }
         )
 
-    return pd.DataFrame(rows, columns=["code", "name", "trading_value", "close_price"]), taiex_close
+    columns = ["code", "name", "trading_value", "open_price", "high_price", "low_price", "close_price"]
+    return pd.DataFrame(rows, columns=columns), taiex_close

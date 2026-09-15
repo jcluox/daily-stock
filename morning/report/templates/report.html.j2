@@ -23,6 +23,7 @@
   .badge.on { background: #2a5adf; color: #fff; font-weight: 600; cursor: pointer; }
   .badge.on:hover { background: #1a3fae; }
   .empty { color: #888; padding: 16px 0; }
+  td.candle { text-align: center; }
   footer { margin-top: 24px; color: #888; font-size: 0.8rem; line-height: 1.6; }
 </style>
 </head>
@@ -51,6 +52,7 @@
         <th>較前次高點</th>
         <th>YoY</th>
         <th>毛利率</th>
+        <th>最新K棒</th>
         <th class="name">最新營收月份</th>
         <th class="name">上榜區間</th>
       </tr>
@@ -66,6 +68,15 @@
         <td>{% if r.pct_above_prior_record is not none %}{{ "{:+.1f}%".format(r.pct_above_prior_record) }}{% else %}-{% endif %}</td>
         <td>{% if r.yoy_pct is not none %}{{ "{:+.1f}%".format(r.yoy_pct) }}{% else %}-{% endif %}</td>
         <td>{% if r.gross_margin_pct is not none %}{{ "{:.1f}%".format(r.gross_margin_pct) }}{% else %}-{% endif %}</td>
+        <td class="candle">
+          {% set c = r.candle | candle_svg %}
+          {% if c %}
+          <svg width="16" height="40" viewBox="0 0 16 40" title="開{{ r.candle.open }} 高{{ r.candle.high }} 低{{ r.candle.low }} 收{{ r.candle.close }}">
+            <line x1="8" y1="{{ c.wick_top }}" x2="8" y2="{{ c.wick_bottom }}" stroke="{{ '#d9333f' if c.is_red else '#1a7a3c' }}" stroke-width="1.5" />
+            <rect x="3" y="{{ c.body_top }}" width="10" height="{{ c.body_bottom - c.body_top }}" fill="{{ '#d9333f' if c.is_red else '#1a7a3c' }}" />
+          </svg>
+          {% else %}-{% endif %}
+        </td>
         <td class="name">{{ r.revenue_month }}</td>
         <td class="name">
           <div class="badges">

@@ -14,8 +14,9 @@ def fetch_tpex_daily() -> pd.DataFrame | None:
     2026-09) — this endpoint only ever returns the latest trading day, so
     it must only be used for the daily incremental fetch, never backfill.
 
-    Returns a DataFrame with columns [code, name, trading_value], or None
-    if the response is empty/unavailable.
+    Returns a DataFrame with columns [code, name, trading_value, open_price,
+    high_price, low_price, close_price], or None if the response is
+    empty/unavailable.
     """
     resp = get(_URL, params={"l": "zh-tw"})
     if resp is None:
@@ -23,6 +24,12 @@ def fetch_tpex_daily() -> pd.DataFrame | None:
     records = resp.json()
     if not records:
         return None
+
+    def _to_float(raw) -> float | None:
+        try:
+            return float(raw)
+        except (ValueError, TypeError):
+            return None
 
     rows = []
     for rec in records:
@@ -35,7 +42,12 @@ def fetch_tpex_daily() -> pd.DataFrame | None:
                 "code": rec["SecuritiesCompanyCode"],
                 "name": rec["CompanyName"],
                 "trading_value": trading_value,
+                "open_price": _to_float(rec.get("Open")),
+                "high_price": _to_float(rec.get("High")),
+                "low_price": _to_float(rec.get("Low")),
+                "close_price": _to_float(rec.get("Close")),
             }
         )
 
-    return pd.DataFrame(rows, columns=["code", "name", "trading_value"])
+    columns = ["code", "name", "trading_value", "open_price", "high_price", "low_price", "close_price"]
+    return pd.DataFrame(rows, columns=columns)

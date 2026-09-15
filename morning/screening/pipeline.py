@@ -19,6 +19,12 @@ def select_for_window(window: int, revenue_history: pd.DataFrame, upto_date: dt.
     history = load_trading_value_history(window, upto_date=upto_date)
     candidates = compute_top_n(window, history)
 
+    latest_ohlc = (
+        history.sort_values("date").groupby("code").last()[["open_price", "high_price", "low_price", "close_price"]]
+        if not history.empty and "open_price" in history.columns
+        else pd.DataFrame()
+    )
+
     passed = []
     for row in candidates.itertuples():
         rev = latest_published_revenue(row.code, revenue_history)
@@ -40,9 +46,20 @@ def select_for_window(window: int, revenue_history: pd.DataFrame, upto_date: dt.
                 "pct_above_prior_record": pct,
                 "yoy_pct": None if pd.isna(yoy_pct) else yoy_pct,
                 "revenue_month": f"{int(rev['roc_year'])}/{int(rev['month']):02d}",
+                "candle": _latest_candle(row.code, latest_ohlc),
             }
         )
     return passed
+
+
+def _latest_candle(code: str, latest_ohlc: pd.DataFrame) -> dict | None:
+    """Latest trading day's OHLC for one stock, for drawing a candlestick — display only."""
+    if latest_ohlc.empty or code not in latest_ohlc.index:
+        return None
+    o, h, l, c = latest_ohlc.loc[code, ["open_price", "high_price", "low_price", "close_price"]]
+    if pd.isna(o) or pd.isna(h) or pd.isna(l) or pd.isna(c):
+        return None
+    return {"open": o, "high": h, "low": l, "close": c, "is_red": c >= o}
 
 
 def run() -> tuple[dict[int, list[dict]], int | None]:
